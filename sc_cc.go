@@ -25,96 +25,93 @@ import (
 	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-
 )
 
-const   PRODUCER = "FISHCO"
-const   SHIPPING = "SHIPPINGCO"
-const   RETAILER = "RETAILER"
-const 	CONSUMER = "CONSUMER"
-const 	CERTIFIER = "CERTIFIER"
+const PRODUCER = "FISHCO"
+const SHIPPING = "SHIPPINGCO"
+const RETAILER = "RETAILER"
+const CONSUMER = "CONSUMER"
+const CERTIFIER = "CERTIFIER"
 
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
 
 type Batch struct {
-	Id   		string  `json:"id"`
-	BType  		string  `json:"bType"`
-	Owner  		string  `json:"owner"`
-	Quantity	int 	`json:"quantity"`
-	Quality	 	string 	`json:"quality"`
-	Signature	string 	`json:"signature"`
+	Id           string        `json:"id"`
+	BType        string        `json:"bType"`
+	Owner        string        `json:"owner"`
+	Quantity     int           `json:"quantity"`
+	Quality      string        `json:"quality"`
+	Signature    string        `json:"signature"`
 	Transactions []Transaction `json:"transactions"`
 }
 
 type Transaction struct {
-	BType  		string  `json:"bType"`
-	Owner  		string  `json:"owner"`
-	Quantity	int 	`json:"quantity"`
-	Quality	 	string 	`json:"quality"`
-	Signature	string 	`json:"signature"`
-	VDate 		string   `json:"vDate"`
-	Location  	string   `json:"location"`
-	TType 		string   `json:"ttype"`
+	BType     string `json:"bType"`
+	Owner     string `json:"owner"`
+	Quantity  int    `json:"quantity"`
+	Quality   string `json:"quality"`
+	Signature string `json:"signature"`
+	VDate     string `json:"vDate"`
+	Location  string `json:"location"`
+	TType     string `json:"ttype"`
 }
 
-type AllBatches struct{
+type AllBatches struct {
 	Batches []string `json:"batches"`
 }
 
-type AllBatchesDetails struct{
+type AllBatchesDetails struct {
 	Batches []Batch `json:"batches"`
 }
 
 // ============================================================================================================================
-// Init 
+// Init
 // ============================================================================================================================
-func (t *SimpleChaincode) Init(stub *shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
 	var err error
-	
+
 	var batches AllBatches
 	jsonAsBytes, _ := json.Marshal(batches)
 	err = stub.PutState("allBatches", jsonAsBytes)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return nil, nil
 }
 
 // ============================================================================================================================
 // Run - Our entry point for Invocations - [LEGACY] obc-peer 4/25/2016
 // ============================================================================================================================
-func (t *SimpleChaincode) Run(stub *shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Run(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("run is running " + function)
 	return t.Invoke(stub, function, args)
 }
 
-
-
 // ============================================================================================================================
 // Run - Our entry point
 // ============================================================================================================================
-func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("Run is running " + function)
 
 	// Handle different functions
-	if function == "init" {													//initialize the chaincode state
+	if function == "init" { //initialize the chaincode state
 		return t.Init(stub, "init", args)
-	} else if function == "createBatch" {											//create a batch
+	} else if function == "createBatch" { //create a batch
 		return t.createBatch(stub, args)
-	} else if function == "claimBatch" {											//claim ownership of a batch
+	} else if function == "claimBatch" { //claim ownership of a batch
 		return t.claimBatch(stub, args)
-	} else if function == "transferBatch" {											//transfer ownership of a batch
+	} else if function == "transferBatch" { //transfer ownership of a batch
 		return t.transferBatch(stub, args)
-	} else if function == "sellBatchItem" {											//sell a batch item
+	} else if function == "sellBatchItem" { //sell a batch item
 		return t.sellBatchItem(stub, args)
-	} else if function == "updateBatchQuality" {									//update batch quality
+	} else if function == "updateBatchQuality" { //update batch quality
 		return t.updateBatchQuality(stub, args)
 	}
-	fmt.Println("run did not find func: " + function)						//error
+	fmt.Println("run did not find func: " + function) //error
 
 	return nil, errors.New("Received unknown function invocation")
 }
@@ -122,30 +119,39 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStubInterface, function str
 // ============================================================================================================================
 // Query - read a variable from chaincode state - (aka read)
 // ============================================================================================================================
-func (t *SimpleChaincode) Query(stub *shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 
-	if len(args) != 1 { return nil, errors.New("Incorrect number of arguments passed") }
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments passed")
+	}
 
-	if function != "getBatch" && function != "getAllBatches" && function != "getAllBatchesDetails" && function != "getNbItems"{
+	if function != "getBatch" && function != "getAllBatches" && function != "getAllBatchesDetails" && function != "getNbItems" {
 		return nil, errors.New("Invalid query function name.")
 	}
 
-	if function == "getBatch" { return t.getBatch(stub, args[0]) }
-	if function == "getAllBatches" { return t.getAllBatches(stub, args[0]) }
-	if function == "getAllBatchesDetails" { return t.getAllBatchesDetails(stub, args[0]) }
-	if function == "getNbItems" { return t.getNbItems(stub, args[0]) }
+	if function == "getBatch" {
+		return t.getBatch(stub, args[0])
+	}
+	if function == "getAllBatches" {
+		return t.getAllBatches(stub, args[0])
+	}
+	if function == "getAllBatchesDetails" {
+		return t.getAllBatchesDetails(stub, args[0])
+	}
+	if function == "getNbItems" {
+		return t.getNbItems(stub, args[0])
+	}
 
-	return nil, nil										
+	return nil, nil
 }
-
 
 // ============================================================================================================================
 // Get Batch Details
 // ============================================================================================================================
-func (t *SimpleChaincode) getBatch(stub *shim.ChaincodeStubInterface, batchId string)([]byte, error){
-	
+func (t *SimpleChaincode) getBatch(stub shim.ChaincodeStubInterface, batchId string) ([]byte, error) {
+
 	fmt.Println("Start find Batch")
-	fmt.Println("Looking for Batch #" + batchId);
+	fmt.Println("Looking for Batch #" + batchId)
 
 	//get the batch index
 	bAsBytes, err := stub.GetState(batchId)
@@ -154,17 +160,16 @@ func (t *SimpleChaincode) getBatch(stub *shim.ChaincodeStubInterface, batchId st
 	}
 
 	return bAsBytes, nil
-	
+
 }
 
+// ============================================================================================================================
+// Get All Batches
+// ============================================================================================================================
+func (t *SimpleChaincode) getAllBatches(stub shim.ChaincodeStubInterface, user string) ([]byte, error) {
 
-// ============================================================================================================================
-// Get All Batches 
-// ============================================================================================================================
-func (t *SimpleChaincode) getAllBatches(stub *shim.ChaincodeStubInterface, user string)([]byte, error){
-	
 	fmt.Println("Start find getAllBatches ")
-	fmt.Println("Looking for All Batches " + user);
+	fmt.Println("Looking for All Batches " + user)
 
 	//get the AllBatches index
 	allBAsBytes, err := stub.GetState("allBatches")
@@ -180,7 +185,7 @@ func (t *SimpleChaincode) getAllBatches(stub *shim.ChaincodeStubInterface, user 
 
 	var rab AllBatches
 
-	for i := range res.Batches{
+	for i := range res.Batches {
 
 		sbAsBytes, err := stub.GetState(res.Batches[i])
 		if err != nil {
@@ -189,8 +194,8 @@ func (t *SimpleChaincode) getAllBatches(stub *shim.ChaincodeStubInterface, user 
 		var sb Batch
 		json.Unmarshal(sbAsBytes, &sb)
 
-		if(sb.Owner == user || user == CERTIFIER) {
-			rab.Batches = append(rab.Batches,sb.Id); 
+		if sb.Owner == user || user == CERTIFIER {
+			rab.Batches = append(rab.Batches, sb.Id)
 		}
 
 	}
@@ -198,17 +203,16 @@ func (t *SimpleChaincode) getAllBatches(stub *shim.ChaincodeStubInterface, user 
 	rabAsBytes, _ := json.Marshal(rab)
 
 	return rabAsBytes, nil
-	
-}
 
+}
 
 // ============================================================================================================================
 // Get All Batches Details for a specific user
 // ============================================================================================================================
-func (t *SimpleChaincode) getAllBatchesDetails(stub *shim.ChaincodeStubInterface, user string)([]byte, error){
-	
+func (t *SimpleChaincode) getAllBatchesDetails(stub shim.ChaincodeStubInterface, user string) ([]byte, error) {
+
 	fmt.Println("Start find getAllBatchesDetails ")
-	fmt.Println("Looking for All Batches Details " + user);
+	fmt.Println("Looking for All Batches Details " + user)
 
 	//get the AllBatches index
 	allBAsBytes, err := stub.GetState("allBatches")
@@ -224,7 +228,7 @@ func (t *SimpleChaincode) getAllBatchesDetails(stub *shim.ChaincodeStubInterface
 
 	var rab AllBatchesDetails
 
-	for i := range res.Batches{
+	for i := range res.Batches {
 
 		sbAsBytes, err := stub.GetState(res.Batches[i])
 		if err != nil {
@@ -233,10 +237,10 @@ func (t *SimpleChaincode) getAllBatchesDetails(stub *shim.ChaincodeStubInterface
 		var sb Batch
 		json.Unmarshal(sbAsBytes, &sb)
 
-		if(sb.Owner == user) {
+		if sb.Owner == user {
 			sb.Transactions = nil
 			sb.Signature = ""
-			rab.Batches = append(rab.Batches,sb); 
+			rab.Batches = append(rab.Batches, sb)
 		}
 
 	}
@@ -244,16 +248,16 @@ func (t *SimpleChaincode) getAllBatchesDetails(stub *shim.ChaincodeStubInterface
 	rabAsBytes, _ := json.Marshal(rab)
 
 	return rabAsBytes, nil
-	
+
 }
 
 // ============================================================================================================================
-// Get Total Number of Items 
+// Get Total Number of Items
 // ============================================================================================================================
-func (t *SimpleChaincode) getNbItems(stub *shim.ChaincodeStubInterface, user string)([]byte, error){
-	
+func (t *SimpleChaincode) getNbItems(stub shim.ChaincodeStubInterface, user string) ([]byte, error) {
+
 	fmt.Println("Start find getTotNbItems ")
-	fmt.Println("Looking for Total Number of Items " + user);
+	fmt.Println("Looking for Total Number of Items " + user)
 
 	//get the AllBatches index
 	allBAsBytes, err := stub.GetState("allBatches")
@@ -267,9 +271,9 @@ func (t *SimpleChaincode) getNbItems(stub *shim.ChaincodeStubInterface, user str
 		return nil, errors.New("Failed to Unmarshal all Batches")
 	}
 
-	nbItems:=0
+	nbItems := 0
 
-	for i := range res.Batches{
+	for i := range res.Batches {
 
 		sbAsBytes, err := stub.GetState(res.Batches[i])
 		if err != nil {
@@ -278,8 +282,8 @@ func (t *SimpleChaincode) getNbItems(stub *shim.ChaincodeStubInterface, user str
 		var sb Batch
 		json.Unmarshal(sbAsBytes, &sb)
 
-		if(sb.Owner == user) {
-			nbItems=nbItems+sb.Quantity; 
+		if sb.Owner == user {
+			nbItems = nbItems + sb.Quantity
 		}
 
 	}
@@ -287,9 +291,8 @@ func (t *SimpleChaincode) getNbItems(stub *shim.ChaincodeStubInterface, user str
 	resAsBytes, _ := json.Marshal(nbItems)
 
 	return resAsBytes, nil
-	
-}
 
+}
 
 // ============================================================================================================================
 // Create new Batch of Items
@@ -309,7 +312,7 @@ func (t *SimpleChaincode) getNbItems(stub *shim.ChaincodeStubInterface, user str
 // 	TType 		string   `json:"ttype"`
 // }
 // ============================================================================================================================
-func (t *SimpleChaincode) createBatch(stub *shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) createBatch(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	var err error
 	fmt.Println("Running createBatch")
@@ -319,38 +322,42 @@ func (t *SimpleChaincode) createBatch(stub *shim.ChaincodeStubInterface, args []
 		return nil, errors.New("Incorrect number of arguments. Expecting 6")
 	}
 
-	if args[2] != PRODUCER { 
+	if args[2] != PRODUCER {
 		fmt.Println("You are not allowed to create a new batch")
-		return nil, errors.New("You are not allowed to create a new batch") 
+		return nil, errors.New("You are not allowed to create a new batch")
 	}
 
 	var bt Batch
-	bt.Id 			= args[0]
-	bt.BType		= args[1]
-	bt.Owner		= args[2]
+	bt.Id = args[0]
+	bt.BType = args[1]
+	bt.Owner = args[2]
 	quantityValue, err := strconv.Atoi(args[3])
-	if err != nil { return nil, errors.New("Invalid Quantity")}
-	if(quantityValue < 1) {return nil, errors.New("Quantity should be at least equal to 1")}
+	if err != nil {
+		return nil, errors.New("Invalid Quantity")
+	}
+	if quantityValue < 1 {
+		return nil, errors.New("Quantity should be at least equal to 1")
+	}
 	bt.Quantity = quantityValue
-	bt.Quality 		= "OK"
-	bt.Signature 	= ""
+	bt.Quality = "OK"
+	bt.Signature = ""
 
 	var tx Transaction
-	tx.VDate		= args[4]
-	tx.Location 	= args[5]
-	tx.TType 		= "CREATE"
-	tx.BType 		= bt.BType
-	tx.Owner 		= bt.Owner
-	tx.Quantity		= bt.Quantity
-	tx.Quality 		= bt.Quality
-	tx.Signature 	= bt.Signature 
+	tx.VDate = args[4]
+	tx.Location = args[5]
+	tx.TType = "CREATE"
+	tx.BType = bt.BType
+	tx.Owner = bt.Owner
+	tx.Quantity = bt.Quantity
+	tx.Quality = bt.Quality
+	tx.Signature = bt.Signature
 
 	bt.Transactions = append(bt.Transactions, tx)
 
 	//Commit batch to ledger
-	fmt.Println("createBatch Commit Batch To Ledger");
+	fmt.Println("createBatch Commit Batch To Ledger")
 	btAsBytes, _ := json.Marshal(bt)
-	err = stub.PutState(bt.Id, btAsBytes)	
+	err = stub.PutState(bt.Id, btAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -365,10 +372,10 @@ func (t *SimpleChaincode) createBatch(stub *shim.ChaincodeStubInterface, args []
 	if err != nil {
 		return nil, errors.New("Failed to Unmarshal all Batches")
 	}
-	allb.Batches = append(allb.Batches,bt.Id)
+	allb.Batches = append(allb.Batches, bt.Id)
 
 	allBuAsBytes, _ := json.Marshal(allb)
-	err = stub.PutState("allBatches", allBuAsBytes)	
+	err = stub.PutState("allBatches", allBuAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -376,11 +383,10 @@ func (t *SimpleChaincode) createBatch(stub *shim.ChaincodeStubInterface, args []
 	return nil, nil
 }
 
-
 // ============================================================================================================================
 // Claim a batch - can only be done by shipping company
 // ============================================================================================================================
-func (t *SimpleChaincode) claimBatch(stub *shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) claimBatch(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	var err error
 	fmt.Println("Running claimBatch")
@@ -390,7 +396,9 @@ func (t *SimpleChaincode) claimBatch(stub *shim.ChaincodeStubInterface, args []s
 		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
-	if args[1] != SHIPPING { return nil, errors.New("You are not allowed to claim a batch") }
+	if args[1] != SHIPPING {
+		return nil, errors.New("You are not allowed to claim a batch")
+	}
 
 	//Update Batch owner
 	bAsBytes, err := stub.GetState(args[0])
@@ -405,21 +413,21 @@ func (t *SimpleChaincode) claimBatch(stub *shim.ChaincodeStubInterface, args []s
 	bch.Owner = args[1]
 
 	var tx Transaction
-	tx.VDate		= args[2]
-	tx.Location 	= args[3]
-	tx.TType 		= "CLAIM"
-	tx.BType 		= bch.BType
-	tx.Owner 		= bch.Owner
-	tx.Quantity		= bch.Quantity
-	tx.Quality 		= bch.Quality
-	tx.Signature 	= bch.Signature 
+	tx.VDate = args[2]
+	tx.Location = args[3]
+	tx.TType = "CLAIM"
+	tx.BType = bch.BType
+	tx.Owner = bch.Owner
+	tx.Quantity = bch.Quantity
+	tx.Quality = bch.Quality
+	tx.Signature = bch.Signature
 
 	bch.Transactions = append(bch.Transactions, tx)
 
 	//Commit updates batch to ledger
-	fmt.Println("claimBatch Commit Updates To Ledger");
+	fmt.Println("claimBatch Commit Updates To Ledger")
 	btAsBytes, _ := json.Marshal(bch)
-	err = stub.PutState(bch.Id, btAsBytes)	
+	err = stub.PutState(bch.Id, btAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +438,7 @@ func (t *SimpleChaincode) claimBatch(stub *shim.ChaincodeStubInterface, args []s
 // ============================================================================================================================
 // Transfer a batch - can only be done by shipping company
 // ============================================================================================================================
-func (t *SimpleChaincode) transferBatch(stub *shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) transferBatch(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	var err error
 	fmt.Println("Running transferBatch")
@@ -440,7 +448,9 @@ func (t *SimpleChaincode) transferBatch(stub *shim.ChaincodeStubInterface, args 
 		return nil, errors.New("Incorrect number of arguments. Expecting 6")
 	}
 
-	if args[1] != SHIPPING { return nil, errors.New("You are not allowed to transfer a batch") }
+	if args[1] != SHIPPING {
+		return nil, errors.New("You are not allowed to transfer a batch")
+	}
 
 	//Update Batch data
 	bAsBytes, err := stub.GetState(args[0])
@@ -456,21 +466,21 @@ func (t *SimpleChaincode) transferBatch(stub *shim.ChaincodeStubInterface, args 
 	bch.Signature = args[5]
 
 	var tx Transaction
-	tx.VDate		= args[2]
-	tx.Location 	= args[3]
-	tx.TType 		= "TRANSFER"
-	tx.BType 		= bch.BType
-	tx.Owner 		= bch.Owner
-	tx.Quantity		= bch.Quantity
-	tx.Quality 		= bch.Quality
-	tx.Signature 	= bch.Signature 
+	tx.VDate = args[2]
+	tx.Location = args[3]
+	tx.TType = "TRANSFER"
+	tx.BType = bch.BType
+	tx.Owner = bch.Owner
+	tx.Quantity = bch.Quantity
+	tx.Quality = bch.Quality
+	tx.Signature = bch.Signature
 
 	bch.Transactions = append(bch.Transactions, tx)
 
 	//Commit updates batch to ledger
-	fmt.Println("transferBatch Commit Updates To Ledger");
+	fmt.Println("transferBatch Commit Updates To Ledger")
 	btAsBytes, _ := json.Marshal(bch)
-	err = stub.PutState(bch.Id, btAsBytes)	
+	err = stub.PutState(bch.Id, btAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -478,11 +488,10 @@ func (t *SimpleChaincode) transferBatch(stub *shim.ChaincodeStubInterface, args 
 	return nil, nil
 }
 
-
 // ============================================================================================================================
 // Sell batch item - can only be done by retailer (it changes the quantity in the batch object)
 // ============================================================================================================================
-func (t *SimpleChaincode) sellBatchItem(stub *shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) sellBatchItem(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	var err error
 	fmt.Println("Running sellBatchItem")
@@ -492,7 +501,9 @@ func (t *SimpleChaincode) sellBatchItem(stub *shim.ChaincodeStubInterface, args 
 		return nil, errors.New("Incorrect number of arguments. Expecting 6")
 	}
 
-	if args[1] != RETAILER { return nil, errors.New("You are not allowed to sell a batch item") }
+	if args[1] != RETAILER {
+		return nil, errors.New("You are not allowed to sell a batch item")
+	}
 
 	//Update Batch data
 	bAsBytes, err := stub.GetState(args[0])
@@ -506,31 +517,35 @@ func (t *SimpleChaincode) sellBatchItem(stub *shim.ChaincodeStubInterface, args 
 	}
 
 	quantityValue, err := strconv.Atoi(args[4])
-	if err != nil { return nil, errors.New("Invalid Quantity")}
-	if(bch.Quantity-quantityValue < 0) { return nil, errors.New("You can't sell "+ args[4] + " items from this batch") }
-	
-	bch.Quantity = bch.Quantity-quantityValue 
+	if err != nil {
+		return nil, errors.New("Invalid Quantity")
+	}
+	if bch.Quantity-quantityValue < 0 {
+		return nil, errors.New("You can't sell " + args[4] + " items from this batch")
+	}
+
+	bch.Quantity = bch.Quantity - quantityValue
 
 	var tx Transaction
-	tx.VDate		= args[2]
-	tx.Location 	= args[3]
-	tx.TType 		= "SELL"
-	tx.BType 		= bch.BType
-	tx.Owner 		= args[5]
-	tx.Quantity		= quantityValue
-	tx.Quality 		= bch.Quality
-	tx.Signature 	= ""
+	tx.VDate = args[2]
+	tx.Location = args[3]
+	tx.TType = "SELL"
+	tx.BType = bch.BType
+	tx.Owner = args[5]
+	tx.Quantity = quantityValue
+	tx.Quality = bch.Quality
+	tx.Signature = ""
 
-	if(bch.Quantity == 0){
+	if bch.Quantity == 0 {
 		bch.Owner = "N/A"
 	}
 
 	bch.Transactions = append(bch.Transactions, tx)
 
 	//Commit updates batch to ledger
-	fmt.Println("sellBatchItem Commit Updates To Ledger");
+	fmt.Println("sellBatchItem Commit Updates To Ledger")
 	btAsBytes, _ := json.Marshal(bch)
-	err = stub.PutState(bch.Id, btAsBytes)	
+	err = stub.PutState(bch.Id, btAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -538,11 +553,10 @@ func (t *SimpleChaincode) sellBatchItem(stub *shim.ChaincodeStubInterface, args 
 	return nil, nil
 }
 
-
 // ============================================================================================================================
 // Update batch quality - this is done through the shipping company via IOT (if the temperature of food truck is above a certain value it will call this method)
 // ============================================================================================================================
-func (t *SimpleChaincode) updateBatchQuality(stub *shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) updateBatchQuality(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 	var err error
 	fmt.Println("Running updateBatchQuality")
@@ -552,7 +566,9 @@ func (t *SimpleChaincode) updateBatchQuality(stub *shim.ChaincodeStubInterface, 
 		return nil, errors.New("Incorrect number of arguments. Expecting 4")
 	}
 
-	if args[0] != SHIPPING { return nil, errors.New("You are not allowed to update batch quality") }
+	if args[0] != SHIPPING {
+		return nil, errors.New("You are not allowed to update batch quality")
+	}
 
 	//get the AllBatches index
 	allBAsBytes, err := stub.GetState("allBatches")
@@ -566,7 +582,7 @@ func (t *SimpleChaincode) updateBatchQuality(stub *shim.ChaincodeStubInterface, 
 		return nil, errors.New("Failed to Unmarshal all Batches")
 	}
 
-	for i := range res.Batches{
+	for i := range res.Batches {
 
 		sbAsBytes, err := stub.GetState(res.Batches[i])
 		if err != nil {
@@ -575,26 +591,25 @@ func (t *SimpleChaincode) updateBatchQuality(stub *shim.ChaincodeStubInterface, 
 		var sb Batch
 		json.Unmarshal(sbAsBytes, &sb)
 
-		if(sb.Owner == args[0]) {
-			sb.Quality = args[3];
+		if sb.Owner == args[0] {
+			sb.Quality = args[3]
 
 			var tx Transaction
-			tx.VDate		= args[1]
-			tx.Location 	= args[2]
-			tx.TType 		= "UPDATE QUALITY"
-			tx.BType 		= sb.BType
-			tx.Owner 		= sb.Owner
-			tx.Quantity		= sb.Quantity
-			tx.Quality 		= sb.Quality
-			tx.Signature 	= sb.Signature 
+			tx.VDate = args[1]
+			tx.Location = args[2]
+			tx.TType = "UPDATE QUALITY"
+			tx.BType = sb.BType
+			tx.Owner = sb.Owner
+			tx.Quantity = sb.Quantity
+			tx.Quality = sb.Quality
+			tx.Signature = sb.Signature
 
 			sb.Transactions = append(sb.Transactions, tx)
 
-
 			//Commit updates batch to ledger
-			fmt.Println("updateBatchQuality Commit Updates To Ledger");
+			fmt.Println("updateBatchQuality Commit Updates To Ledger")
 			btAsBytes, _ := json.Marshal(sb)
-			err = stub.PutState(sb.Id, btAsBytes)	
+			err = stub.PutState(sb.Id, btAsBytes)
 			if err != nil {
 				return nil, err
 			}
@@ -603,8 +618,6 @@ func (t *SimpleChaincode) updateBatchQuality(stub *shim.ChaincodeStubInterface, 
 
 	return nil, nil
 }
-
-
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))
